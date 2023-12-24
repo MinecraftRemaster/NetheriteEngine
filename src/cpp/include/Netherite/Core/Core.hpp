@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <unordered_map>
 #include <memory>
+#include <atomic>
 // push headers for headers
 #endif
 //
@@ -49,12 +50,16 @@ namespace nth {
             this->addressOrId = addressOrId;
             this->typeOf = typeOf;
         }
-        
+
         //
-        public: Handle(Handle const& handle = Handle(0ull, 0u)) {
+        public: Handle(Handle const& handle) = default;
+        public: Handle() = default;
+
+        //
+        /*public: Handle(Handle const& handle = Handle(0ull, 0u)) {
             this->addressOrId = handle.addressOrId;
             this->typeOf = handle.typeOf;
-        }
+        }*/
 
         //
         public: Handle& operator=(Handle const& handle) {
@@ -93,11 +98,36 @@ namespace nth {
     class RegistryMember;
 
     //
+#if defined(__clang__)
+    //
+    template<class T>
+    using xn_shared_ptr = std::shared_ptr<T>;
+
+    //
+    template<class T>
+    using xn_weak_ptr = std::weak_ptr<T>;
+
+    //
+    #define xn_lock lock
+#else
+    //
+    template<class T>
+    using xn_shared_ptr = std::atomic<std::shared_ptr<T>>;
+
+    //
+    template<class T>
+    using xn_weak_ptr = std::atomic<std::weak_ptr<T>>;
+
+    //
+    #define xn_lock load().lock
+#endif
+
+    //
     class RegistryMemberBase : public std::enable_shared_from_this<RegistryMemberBase> {
         protected: 
-        std::weak_ptr<Handle> handle = {};
-        std::shared_ptr<Handle> base = {};
-        std::shared_ptr<BaseDataObj> data = {};
+        xn_weak_ptr<Handle> handle = {};
+        xn_shared_ptr<Handle> base = {};
+        xn_shared_ptr<BaseDataObj> data = {};
 
         //
         public: RegistryMemberBase(std::shared_ptr<Handle> base = {}, std::shared_ptr<Handle> handle = {}): base(base), handle(handle) {
@@ -105,9 +135,9 @@ namespace nth {
         }
 
         //
-        public: template<class T = BaseDataObj>
+        public: template<class T = RegistryMemberBase>
         RegistryMember<T> inline as() const {
-            return std::reinterpret_pointer_cast<T>(shared_from_this());
+            return std::dynamic_pointer_cast<T>(shared_from_this());
         }
 
         //
@@ -123,13 +153,13 @@ namespace nth {
 
         //
         public: template<class H = uintptr_t>
-        inline static std::shared_ptr<H> create() {
+        inline static xn_shared_ptr<H> create() {
             return std::make_shared<H>((H)0ull);
         }
 
         //
         public: inline std::shared_ptr<Handle> getHandle() const {
-            return this->handle.lock();
+            return this->handle.xn_lock();
         }
 
         //
