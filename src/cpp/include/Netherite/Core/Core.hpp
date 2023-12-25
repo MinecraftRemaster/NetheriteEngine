@@ -10,8 +10,8 @@
 #else
 #include <cstring>
 #include <cstdint>
-#include <unordered_map>
 #include <memory>
+#include <unordered_map>
 #include <atomic>
 // push headers for headers
 #endif
