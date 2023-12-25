@@ -151,7 +151,7 @@ namespace nth {
         xn_shared_ptr<BaseData> data = {};
 
         //
-        public: RegistryMemberBase(std::shared_ptr<Handle> base = {}, std::shared_ptr<Handle> handle = {}): base(base), handle(handle) {
+        public: RegistryMemberBase(std::shared_ptr<Handle> base = {}, std::shared_ptr<Handle> handle = {}, std::shared_ptr<BaseData> data = {}): base(base), handle(handle), data(data) {
             
         }
 
@@ -251,13 +251,11 @@ namespace nth {
     HQ BaseData::create(std::shared_ptr<Handle> base, void const* cInfoPtr) {
         auto baseOf = Registry.at(base);//->specify<DeviceData>();
         auto value = 0ull;
-        HQ hq = std::make_shared<Handle>((uintptr_t)value, (uint32_t)HType::Unknown);
-        auto by = std::make_shared<RegistryMember<BaseData>>(base, hq);
+        auto hq = std::make_shared<Handle>((uintptr_t)value, (uint32_t)HType::Unknown);
+        auto by = std::make_shared<RegistryMember<BaseData>>(base, hq, shared_from_this());
         Registry.emplace(std::weak_ptr<Handle>(hq), by);
         return hq;
     }
-
-    
 
     #endif
 }
