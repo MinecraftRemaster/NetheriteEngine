@@ -135,7 +135,7 @@ namespace nth {
         public: virtual void get(std::shared_ptr<Handle> handle, void* output = nullptr, void const* gInfoPtr = nullptr);
 
         //
-        public: template<class T> inline static xn_shared_ptr<Handle> create(std::shared_ptr<Handle> base, T const& info) { return std::make_shared<T>()->create(base, &info); };
+        public: template<class O, class T> inline static decltype(auto) create(std::shared_ptr<Handle> base, T const& info) { return std::make_shared<O>()->create(base, &info); };
         public: template<class O, class T> static inline decltype(auto) get(std::shared_ptr<Handle> handle, T const& info);
     };
 
