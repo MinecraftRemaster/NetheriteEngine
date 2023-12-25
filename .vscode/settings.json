@@ -142,6 +142,9 @@
     "xlocmes": "cpp",
     "xlocmon": "cpp",
     "xlocnum": "cpp",
-    "xloctime": "cpp"
+    "xloctime": "cpp",
+    "any": "cpp",
+    "variant": "cpp",
+    "parentbad": "cpp"
   }
 }

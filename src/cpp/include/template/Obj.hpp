@@ -1,4 +1,6 @@
+#ifndef NTH_IMPLEMENTATION
 #pragma once
+#endif
 
 //
 #ifndef NTH_IMPLEMENTATION
