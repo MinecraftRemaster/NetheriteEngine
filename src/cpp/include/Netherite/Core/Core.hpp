@@ -28,6 +28,7 @@ namespace nth {
     //
     class Handle;
     class RegistryMemberBase;
+    class WeakMemberBase;
 }
 
 template<> struct std::hash<nth::Handle> {
@@ -44,9 +45,16 @@ namespace nth {
     using reference_t = uintptr_t;
 
     //
+    enum class HType : uint32_t {
+        Unknown = 0,
+        Buffer = 1,
+        Image = 2
+    };
+
+    //
     class Handle {
         public: uintptr_t addressOrId = 0ull;
-        public: uint32_t typeOf = 0;
+        public: uint32_t typeOf = 0; // i.e. aka HType
 
         //
         public: Handle(uintptr_t const& addressOrId, uint32_t const& typeOf) {
@@ -91,14 +99,7 @@ namespace nth {
         public: template<class T> T const& as() const { return reinterpret_cast<T const&>(this->addressOrId); }
     };
 
-    //
-    class BaseDataObj : public std::enable_shared_from_this<BaseDataObj> {
-        public: BaseDataObj() {};
-    };
-
-    //
-    template<class T = BaseDataObj>
-    class RegistryMember;
+    
 
     //
 #if defined(__clang__)
@@ -126,11 +127,28 @@ namespace nth {
 #endif
 
     //
+    class BaseData : public std::enable_shared_from_this<BaseData> {
+        public: BaseData() = default;
+
+        //
+        public: virtual xn_shared_ptr<Handle> create(std::shared_ptr<Handle> base, void const* cInfoPtr = nullptr);
+        public: virtual void get(std::shared_ptr<Handle> handle, void* output = nullptr, void const* gInfoPtr = nullptr);
+
+        //
+        public: template<class T> inline static xn_shared_ptr<Handle> create(std::shared_ptr<Handle> base, T const& info) { return std::make_shared<T>()->create(base, &info); };
+        public: template<class O, class T> static inline decltype(auto) get(std::shared_ptr<Handle> handle, T const& info);
+    };
+
+    //
+    template<class T = BaseData> class RegistryMember;
+    template<class T = WeakMemberBase> class WeakMember;
+
+    //
     class RegistryMemberBase : public std::enable_shared_from_this<RegistryMemberBase> {
         protected: 
         xn_weak_ptr<Handle> handle = {};
         xn_shared_ptr<Handle> base = {};
-        xn_shared_ptr<BaseDataObj> data = {};
+        xn_shared_ptr<BaseData> data = {};
 
         //
         public: RegistryMemberBase(std::shared_ptr<Handle> base = {}, std::shared_ptr<Handle> handle = {}): base(base), handle(handle) {
@@ -138,24 +156,24 @@ namespace nth {
         }
 
         //
-        std::weak_ptr<RegistryMemberBase> inline weak() {
+        public: std::weak_ptr<RegistryMemberBase> inline weak() {
             return shared_from_this();
         }
 
         //
-        public: template<class T = RegistryMemberBase>
-        std::shared_ptr<RegistryMember<T>> inline as() const {
+        public: template<class T = BaseData>
+        xn_shared_ptr<RegistryMember<T>> inline specify() const {
             return std::dynamic_pointer_cast<T>(shared_from_this());
         }
 
         //
-        public: template<class T = BaseDataObj>
-        inline std::shared_ptr<T> getData() const {
+        public: template<class T = BaseData>
+        inline xn_shared_ptr<T> getData() const {
             return std::reinterpret_pointer_cast<T>(this->data);
         }
 
         //
-        public: inline static std::shared_ptr<Handle> create() {
+        public: inline static xn_shared_ptr<Handle> create() {
             return std::make_shared<Handle>();
         }
 
@@ -166,12 +184,12 @@ namespace nth {
         }
 
         //
-        public: inline std::shared_ptr<Handle> getHandle() const {
+        public: inline xn_shared_ptr<Handle> getHandle() const {
             return this->handle.xn_lock();
         }
 
         //
-        public: inline std::shared_ptr<Handle> getBase() const {
+        public: inline xn_shared_ptr<Handle> getBase() const {
             return this->base;
         }
     };
@@ -181,30 +199,65 @@ namespace nth {
     class RegistryMember: public RegistryMemberBase {
         
         //
-        public: inline std::shared_ptr<T> getData() const {
+        public: inline xn_shared_ptr<T> getData() const {
             return std::reinterpret_pointer_cast<T>(this->data);
         }
 
-        
     };
 
     // for buffer, image, etc.
-    template<class K = uintptr_t, class T = RegistryMemberBase>
-    using weak_map_t = std::unordered_map<std::weak_ptr<K>, T, std::owner_less<std::weak_ptr<K>>>;
+    using HQ = xn_shared_ptr<Handle>;
+    template<class K = Handle, class T = RegistryMemberBase>
+    using weak_map_t = std::unordered_map<std::weak_ptr<K>, xn_shared_ptr<T>, std::owner_less<std::weak_ptr<K>>>;
+    inline static weak_map_t<> Registry = {};
 
-    // for device, commandbuffer, instance, queue, etc.
-    template<class T = RegistryMemberBase> 
-    using registry_t = std::unordered_map<Handle, T>;
+    //
+    inline static HQ getHandle(HQ handle) {
+        return Registry.at(handle)->getBase();
+    }
 
-    // for buffer, image, etc.
-    inline static weak_map_t<> WeakMap = {};
+    //
+    class Holder : public std::enable_shared_from_this<Holder> {
+        protected: HQ handle = {};
+        public: Holder(HQ handle = {}) : handle(handle) {};
+    };
 
-    // for device, commandbuffer, instance, queue, etc.
-    inline static registry_t<> Registry = {};
+    //
+    template<class T = BaseData>
+    class HolderOf : public Holder {
+        public: template<uint32_t M, class C>
+        inline HQ create(C const& cInfo) {
+            return T::create<M>(handle, cInfo);
+        }
+
+        //
+        public: template<class C>
+        inline decltype(auto) get(C const& getInfo) {
+            return T::get(handle, getInfo);
+        }
+    };
+
+    //
+    template<class O, class T>
+    inline static decltype(auto) BaseData::get(std::shared_ptr<Handle> handle, T const& gInfoPtr) {
+        auto output = O{};
+        Registry.at(handle)->getData()->get(handle, &output, &gInfoPtr);
+        return output;
+    };
 
     //
     #else
     // implementation
+    HQ BaseData::create(std::shared_ptr<Handle> base, void const* cInfoPtr) {
+        auto baseOf = Registry.at(base);//->specify<DeviceData>();
+        auto value = 0ull;
+        HQ hq = std::make_shared<Handle>((uintptr_t)value, (uint32_t)HType::Unknown);
+        auto by = std::make_shared<RegistryMember<BaseData>>(base, hq);
+        Registry.emplace(std::weak_ptr<Handle>(hq), by);
+        return hq;
+    }
+
+    
 
     #endif
 }
