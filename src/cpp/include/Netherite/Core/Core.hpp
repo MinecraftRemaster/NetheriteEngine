@@ -48,8 +48,12 @@ namespace nth {
     //
     enum class HType : uint32_t {
         Unknown = 0,
-        Buffer = 1,
-        Image = 2
+        Instance = 1,
+        PhysicalDevice = 2,
+        Device = 3,
+
+        Buffer = 8,
+        Image = 9
     };
 
     //
