@@ -1,4 +1,6 @@
+#ifndef NTH_IMPLEMENTATION
 #pragma once
+#endif
 
 //
 #ifdef NTH_IMPLEMENTATION
@@ -17,20 +19,21 @@
 
 //
 #ifdef NTH_IMPLEMENTATION
-#include "./Handle.hpp"
+//#include "./Handle.hpp"
 #endif
 
 //
+#ifndef NTH_IMPLEMENTATION
 namespace nth {
     //
     class Handle;
     class RegistryMemberBase;
 }
 
-//
 template<> struct std::hash<nth::Handle> {
     inline std::size_t operator()(const nth::Handle& s) const noexcept;
 };
+#endif
 
 //
 namespace nth {
@@ -135,8 +138,13 @@ namespace nth {
         }
 
         //
+        std::weak_ptr<RegistryMemberBase> inline weak() {
+            return shared_from_this();
+        }
+
+        //
         public: template<class T = RegistryMemberBase>
-        RegistryMember<T> inline as() const {
+        std::shared_ptr<RegistryMember<T>> inline as() const {
             return std::dynamic_pointer_cast<T>(shared_from_this());
         }
 
@@ -187,6 +195,12 @@ namespace nth {
     // for device, commandbuffer, instance, queue, etc.
     template<class T = RegistryMemberBase> 
     using registry_t = std::unordered_map<Handle, T>;
+
+    // for buffer, image, etc.
+    inline static weak_map_t<> WeakMap = {};
+
+    // for device, commandbuffer, instance, queue, etc.
+    inline static registry_t<> Registry = {};
 
     //
     #else
