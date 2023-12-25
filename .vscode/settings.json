@@ -39,8 +39,13 @@
   "C_Cpp_Runner.linkerArgs": [],
   "C_Cpp_Runner.includePaths": [],
   "C_Cpp_Runner.includeSearch": [
-    "*",
-    "**/*"
+    "**/src/cpp/include",
+    "**/src/cpp/include/**",
+    "**/src/cpp/include/*/**",
+    "**/include",
+    "**/include/**",
+    "**/include/*/**",
+    "**/include/**/*",
   ],
   "C_Cpp_Runner.excludeSearch": [
     "**/build",

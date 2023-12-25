@@ -11,6 +11,7 @@
 #include <cstring>
 #include <cstdint>
 #include <memory>
+#include <map>
 #include <unordered_map>
 #include <atomic>
 // push headers for headers
@@ -208,7 +209,7 @@ namespace nth {
     // for buffer, image, etc.
     using HQ = xn_shared_ptr<Handle>;
     template<class K = Handle, class T = RegistryMemberBase>
-    using weak_map_t = std::unordered_map<std::weak_ptr<K>, xn_shared_ptr<T>, std::owner_less<std::weak_ptr<K>>>;
+    using weak_map_t = std::map<std::weak_ptr<K>, xn_shared_ptr<T>, std::owner_less<std::weak_ptr<K>>>;
     inline static weak_map_t<> Registry = {};
 
     //
@@ -239,7 +240,7 @@ namespace nth {
 
     //
     template<class O, class T>
-    inline static decltype(auto) BaseData::get(std::shared_ptr<Handle> handle, T const& gInfoPtr) {
+    inline decltype(auto) BaseData::get(std::shared_ptr<Handle> handle, T const& gInfoPtr) {
         auto output = O{};
         Registry.at(handle)->getData()->get(handle, &output, &gInfoPtr);
         return output;
