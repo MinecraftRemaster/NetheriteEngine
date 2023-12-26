@@ -86,7 +86,8 @@ namespace rds {
 
     //
     inline uint16_t StringWordCount(std::string const& name = "") {
-        return (name.size() + 4 - 1) / 4;
+        //return (name.size() + 4 - 1) / 4; // if contain NULL terminator
+        return (name.size()>>2)+1; // if NOT contain NULL terminator
     }
 
     //
