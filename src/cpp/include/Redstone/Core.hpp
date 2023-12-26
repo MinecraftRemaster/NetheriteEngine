@@ -22,7 +22,7 @@
 #include <atomic>
 
 //
-#include <spirv/unified1/spirv.hpp>
+#include <Vulkan/spirv/unified1/spirv.hpp>
 // push headers for headers
 #endif
 //
@@ -74,7 +74,7 @@ namespace rds {
     template<class... O>
     inline decltype(auto) PushOpSeq(std::vector<uint32_t>& code, uint32_t const& OpCode, O const& ...Seq) {
         using T = std::common_type_t<O...>;
-        std::initializer_list<T> li{std::forward<O>(Seq)...};
+        std::initializer_list<T> li{std::forward<O const&>(Seq)...};
         std::vector<T> Q{li};
         code.push_back(OpCode);
         code.insert(code.end(), Q.begin(), Q.end());

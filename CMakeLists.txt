@@ -8,6 +8,6 @@ project(NetheriteEngine)
 #target_link_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
 # Add sub directories
-add_subdirectory(src/cpp/library/JNI/Netherite)
+#add_subdirectory(src/cpp/library/JNI/Netherite)
 add_subdirectory(src/cpp/library/Native/Netherite)
 add_subdirectory(src/cpp/test/Cube)

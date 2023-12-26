@@ -14,6 +14,9 @@
 #include <map>
 #include <unordered_map>
 #include <atomic>
+#include <functional>
+#include <algorithm>
+#include <iterator>
 // push headers for headers
 #endif
 //
@@ -56,6 +59,32 @@ namespace nth {
         Image = 9
     };
 
+    //
+#if defined(__clang__)
+    //
+    template<class T>
+    using xn_shared_ptr = std::shared_ptr<T>;
+
+    //
+    template<class T>
+    using xn_weak_ptr = std::weak_ptr<T>;
+
+    //
+    #define xn_lock lock
+#else
+    //
+    template<class T>
+    using xn_shared_ptr = std::atomic<std::shared_ptr<T>>;
+
+    //
+    template<class T>
+    using xn_weak_ptr = std::atomic<std::weak_ptr<T>>;
+
+    //
+    #define xn_lock load().lock
+#endif
+
+    
     //
     class Handle {
         public: uintptr_t addressOrId = 0ull;
@@ -104,32 +133,21 @@ namespace nth {
         public: template<class T> T const& as() const { return reinterpret_cast<T const&>(this->addressOrId); }
     };
 
-    
+    //
+    using HQ = xn_shared_ptr<Handle>;
 
     //
-#if defined(__clang__)
-    //
-    template<class T>
-    using xn_shared_ptr = std::shared_ptr<T>;
+    /*class Holder {
+        protected: HQ handle = {};
 
-    //
-    template<class T>
-    using xn_weak_ptr = std::weak_ptr<T>;
+        //
+        public: Holder(HQ handle = {}) : handle(handle) {};
 
-    //
-    #define xn_lock lock
-#else
-    //
-    template<class T>
-    using xn_shared_ptr = std::atomic<std::shared_ptr<T>>;
-
-    //
-    template<class T>
-    using xn_weak_ptr = std::atomic<std::weak_ptr<T>>;
-
-    //
-    #define xn_lock load().lock
-#endif
+        //
+        public: operator HQ&() { return handle; };
+        public: operator HQ const&() const { return handle; };
+        public: Holder& operator=(HQ const& h) { handle = h; return *this; };
+    };*/
 
     //
     class BaseData : public std::enable_shared_from_this<BaseData> {
@@ -142,7 +160,46 @@ namespace nth {
         //
         public: template<class O, class T> inline static decltype(auto) create(std::shared_ptr<Handle> base, T const& info) { return std::make_shared<O>()->create(base, &info); };
         public: template<class O, class T> static inline decltype(auto) get(std::shared_ptr<Handle> handle, T const& info);
+
+        // routine when create device or instance
+        public: template<class T, class F = char const*>
+        inline static decltype(auto) filterBy(std::vector<F>& what, std::function<bool(F const&, T const&)> filter, std::vector<T> const& available = {}) {
+            for (const auto& ext : available) {
+                const auto e = std::find_if(what.begin(), what.end(), [ext, filter](F const& a){
+                    return filter(a, ext); //strcmp(a, ext.layerName) == 0;
+                });
+                if (e == what.end()) { what.erase(e); };
+            }
+            return what;
+        }
+
+        // routine when create device or instance
+        public: template<class T, class F>
+        inline static decltype(auto) transform(std::vector<F>& what, std::function<T(F const&)> transform) {
+            std::vector<T> to = {}; to.reserve(what.size());
+            std::transform(what.begin(), what.end(), std::back_inserter(to), transform);
+            return to;
+        }
     };
+
+    //
+    template<class T = BaseData>
+    class HolderOf : public HQ //public Holder 
+    {
+        public: template<uint32_t M, class C>
+        inline HQ create(C const& cInfo) {
+            decltype(auto) handle = shared_from_this();
+            return T::create<M>(handle, cInfo);
+        }
+
+        //
+        public: template<class C>
+        inline decltype(auto) get(C const& getInfo) {
+            decltype(auto) handle = shared_from_this();
+            return T::get(handle, getInfo);
+        }
+    };
+
 
     //
     template<class T = BaseData> class RegistryMember;
@@ -211,7 +268,6 @@ namespace nth {
     };
 
     // for buffer, image, etc.
-    using HQ = xn_shared_ptr<Handle>;
     template<class K = Handle, class T = RegistryMemberBase>
     using weak_map_t = std::map<std::weak_ptr<K>, xn_shared_ptr<T>, std::owner_less<std::weak_ptr<K>>>;
     inline static weak_map_t<> Registry = {};
@@ -220,27 +276,6 @@ namespace nth {
     inline static HQ getHandle(HQ handle) {
         return Registry.at(handle)->getBase();
     }
-
-    //
-    class Holder : public std::enable_shared_from_this<Holder> {
-        protected: HQ handle = {};
-        public: Holder(HQ handle = {}) : handle(handle) {};
-    };
-
-    //
-    template<class T = BaseData>
-    class HolderOf : public Holder {
-        public: template<uint32_t M, class C>
-        inline HQ create(C const& cInfo) {
-            return T::create<M>(handle, cInfo);
-        }
-
-        //
-        public: template<class C>
-        inline decltype(auto) get(C const& getInfo) {
-            return T::get(handle, getInfo);
-        }
-    };
 
     //
     template<class O, class T>
