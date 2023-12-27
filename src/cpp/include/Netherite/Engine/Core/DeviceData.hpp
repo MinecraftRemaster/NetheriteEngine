@@ -4,7 +4,7 @@
 
 //
 #ifndef NTH_IMPLEMENTATION
-#include "../../Core/Core.hpp"
+#include "../../Core/Vulkan.hpp"
 #endif
 
 //
@@ -27,21 +27,68 @@ namespace nth {
     #ifndef NTH_IMPLEMENTATION
 
     //
-    struct BufferCreateInfo {
-        
-    };
-
-    //
-    struct ImageCreateInfo {
-        
+    struct DeviceCreateInfo {
+        uint32_t physicalDeviceId = 0;
     };
 
     // header
     class DeviceData : public BaseData {
-        
+        HQ virtual create(std::shared_ptr<Handle> base, void const* cInfoPtr) override;
     };
     #else
     // implementation
+    HQ BaseData::create(std::shared_ptr<Handle> base, void const* cInfoPtr) {
+        auto baseOf = Registry.at(base)->specify<InstanceData>();
+        auto const& cInfo = *reinterpret_cast<DeviceCreateInfo const*>(cInfoPtr);
 
+        //
+        auto instance = vk::Instance(base->addressOrId);
+        auto devices = instance.enumeratePhysicalDevices();
+        auto physicalDevice = devices[cInfo.physicalDeviceId];
+
+        //
+        auto extensions = std::vector<char const*>{
+            
+        };
+
+        //
+        auto layers = std::vector<char const*>{
+            
+        };
+
+        //
+        BaseData::filterBy(extensions, [](auto const& a, auto const& prop){
+            return (strcmp(a, prop.extensionName) == 0);
+        }, physicalDevice.enumerateDeviceExtensionProperties(););
+
+        //
+        BaseData::filterBy(layers, [](auto const& a, auto const& prop){
+            return (strcmp(a, prop.layerName) == 0);
+        }, physicalDevice.enumerateDeviceLayerProperties());
+
+        //
+        auto queueInfos = BaseData::transform(createInfo.queueInfos, [] (auto const& queueFamily) {
+            vk::DeviceQueueCreateInfo createInfo = {};
+            createInfo.setQueuePriorities(*queueFamily.second.queuePriority);
+            createInfo.setQueueFamilyIndex(queueFamily.first);
+            return createInfo;
+        });
+
+        //
+        vk::DeviceCreateInfo deviceInfo = {};
+        deviceInfo.setPEnabledExtensionNames(extensions);
+        deviceInfo.setPEnabledLayerNames(layers);
+        deviceInfo.setQueueCreateInfos(queueInfos);
+
+        //
+        auto value = physicalDevice.createDevice(deviceInfo);
+
+        //
+        auto hq = std::make_shared<Handle>((uintptr_t)value, (uint32_t)HType::Device);
+        auto by = std::make_shared<RegistryMember<DeviceData>>(base, hq, shared_from_this());
+        Registry.emplace(std::weak_ptr<Handle>(hq), by);
+        HMap.emplace((uintptr_t)value, hq);
+        return hq;
+    }
     #endif
 }

@@ -12,11 +12,11 @@
 #include <cstdint>
 #include <memory>
 #include <map>
-#include <unordered_map>
-#include <atomic>
 #include <functional>
 #include <algorithm>
 #include <iterator>
+#include <unordered_map>
+#include <atomic>
 // push headers for headers
 #endif
 //
@@ -208,9 +208,15 @@ namespace nth {
     //
     class RegistryMemberBase : public std::enable_shared_from_this<RegistryMemberBase> {
         protected: 
+
+        //
         xn_weak_ptr<Handle> handle = {};
         xn_shared_ptr<Handle> base = {};
         xn_shared_ptr<BaseData> data = {};
+
+        //
+        //std::unordered_map<Handle, xn_weak_ptr<RegistryMemberBase>> objMap = {};
+        std::unordered_map<Handle, xn_weak_ptr<Handle>> objMap = {};
 
         //
         public: RegistryMemberBase(std::shared_ptr<Handle> base = {}, std::shared_ptr<Handle> handle = {}, std::shared_ptr<BaseData> data = {}): base(base), handle(handle), data(data) {
@@ -270,7 +276,11 @@ namespace nth {
     // for buffer, image, etc.
     template<class K = Handle, class T = RegistryMemberBase>
     using weak_map_t = std::map<std::weak_ptr<K>, xn_shared_ptr<T>, std::owner_less<std::weak_ptr<K>>>;
+    using handle_map = std::map<uintptr_t, xn_weak_ptr<Handle>>;
+
+    //
     inline static weak_map_t<> Registry = {};
+    inline static handle_map HMap = {};
 
     //
     inline static HQ getHandle(HQ handle) {

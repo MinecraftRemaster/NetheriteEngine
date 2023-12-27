@@ -4,7 +4,7 @@
 
 //
 #ifndef NTH_IMPLEMENTATION
-#include "../../Core/Core.hpp"
+#include "../../Core/Vulkan.hpp"
 #endif
 
 //

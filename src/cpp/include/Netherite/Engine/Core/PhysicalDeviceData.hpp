@@ -19,20 +19,21 @@
 
 //
 #ifdef NTH_IMPLEMENTATION
-#include "./DeviceData.hpp"
+#include "./PhysicalDeviceData.hpp"
 #endif
 
 //
 namespace nth {
     #ifndef NTH_IMPLEMENTATION
-    struct ImageGetInfo {
+    struct PhysicalDeviceGetInfo {
         
     };
 
     // header
-    class ImageData : public BaseData {
+    class PhysicalDeviceData : public BaseData {
         
     };
+
     #else
     // implementation
 

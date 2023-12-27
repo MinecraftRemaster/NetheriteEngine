@@ -4,12 +4,14 @@
 
 //
 #ifndef NTH_IMPLEMENTATION
-#include "../../Core/Vulkan.hpp"
+#include "./Core.hpp"
 #endif
 
 //
 #ifdef NTH_IMPLEMENTATION
 #undef NTH_IMPLEMENTATION
+#include <vulkan/vulkan.hpp>
+#include <vma/vk_mem_alloc.hpp>
 // push headers without implementation
 #define NTH_IMPLEMENTATION
 #else
@@ -19,20 +21,14 @@
 
 //
 #ifdef NTH_IMPLEMENTATION
-#include "./DeviceData.hpp"
+#include "./Vulkan.hpp"
 #endif
 
 //
 namespace nth {
     #ifndef NTH_IMPLEMENTATION
-    struct ImageGetInfo {
-        
-    };
+    //
 
-    // header
-    class ImageData : public BaseData {
-        
-    };
     #else
     // implementation
 
