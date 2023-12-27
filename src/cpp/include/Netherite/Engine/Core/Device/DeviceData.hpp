@@ -92,10 +92,10 @@ namespace nth {
 
         //
         auto hq = std::make_shared<Handle>((uintptr_t)value, (uint32_t)HType::Device);
-        auto by = std::make_shared<RegistryMember<DeviceData>>(base, hq, shared_from_this());
+        auto by = std::make_shared<RegistryMember<DeviceData>>(base, shared_from_this());
         Registry.emplace(std::weak_ptr<Handle>(hq), by);
         HMap.emplace((uintptr_t)value, hq);
-        return hq;
+        return (this->handle = hq);
     }
     #endif
 }

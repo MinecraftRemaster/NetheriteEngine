@@ -152,6 +152,9 @@ namespace nth {
 
     //
     class BaseData : public std::enable_shared_from_this<BaseData> {
+        protected: xn_weak_ptr<Handle> handle = {};
+
+        //
         public: BaseData() = default;
 
         //
@@ -161,6 +164,11 @@ namespace nth {
         //
         public: template<class O, class T> inline static decltype(auto) create(std::shared_ptr<Handle> base, T const& info) { return std::make_shared<O>()->create(base, &info); };
         public: template<class O, class T> static inline decltype(auto) get(std::shared_ptr<Handle> handle, T const& info);
+
+        //
+        public: inline xn_shared_ptr<Handle> getHandle() const {
+            return this->handle.xn_lock();
+        }
 
         // routine when create device or instance
         public: template<class T, class F = char const*>
@@ -211,7 +219,6 @@ namespace nth {
         protected: 
 
         //
-        xn_weak_ptr<Handle> handle = {};
         xn_shared_ptr<Handle> base = {};
         xn_shared_ptr<BaseData> data = {};
 
@@ -220,7 +227,7 @@ namespace nth {
         std::unordered_map<Handle, xn_weak_ptr<Handle>> objMap = {};
 
         //
-        public: RegistryMemberBase(std::shared_ptr<Handle> base = {}, std::shared_ptr<Handle> handle = {}, std::shared_ptr<BaseData> data = {}): base(base), handle(handle), data(data) {
+        public: RegistryMemberBase(std::shared_ptr<Handle> base = {}, std::shared_ptr<BaseData> data = {}): base(base), data(data) {
             
         }
 
@@ -254,7 +261,7 @@ namespace nth {
 
         //
         public: inline xn_shared_ptr<Handle> getHandle() const {
-            return this->handle.xn_lock();
+            return this->data->getHandle();
         }
 
         //
@@ -324,9 +331,9 @@ namespace nth {
         auto baseOf = Registry.at(base);//->specify<DeviceData>();
         auto value = 0ull;
         auto hq = std::make_shared<Handle>((uintptr_t)value, (uint32_t)HType::Unknown);
-        auto by = std::make_shared<RegistryMember<BaseData>>(base, hq, shared_from_this());
+        auto by = std::make_shared<RegistryMember<BaseData>>(base, shared_from_this());
         Registry.emplace(std::weak_ptr<Handle>(hq), by);
-        return hq;
+        return (this->handle = hq);
     }
 
     #endif
