@@ -162,9 +162,11 @@ namespace nth {
         public: virtual void get(std::shared_ptr<Handle> handle, void* output = nullptr, void const* gInfoPtr = nullptr);
 
         //
-        public: template<class O, class T> inline static decltype(auto) create(std::shared_ptr<Handle> base, T const& info) { return std::make_shared<O>()->create(base, &info); };
-        public: template<class O, class T> static inline decltype(auto) get(std::shared_ptr<Handle> handle, T const& info);
-
+        public: template<class O, class T> inline decltype(auto) create(T const& info) { return createBy<T>(this->handle.xn_lock(), &info); };
+        public: template<class O, class T> inline decltype(auto) get(T const& info) { return getBy<T>(this->handle.xn_lock(), &info); };
+        public: template<class O, class T> static inline decltype(auto) createBy(std::shared_ptr<Handle> base, T const& info) { return std::make_shared<O>()->create(base, &info); };
+        public: template<class O, class T> static inline decltype(auto) getBy(std::shared_ptr<Handle> base, T const& info);
+        
         //
         public: inline xn_shared_ptr<Handle> getHandle() const {
             return this->handle.xn_lock();
@@ -215,6 +217,9 @@ namespace nth {
     template<class T = WeakMemberBase> class WeakMember;
 
     //
+    struct void_t {};
+
+    //
     class RegistryMemberBase : public std::enable_shared_from_this<RegistryMemberBase> {
         protected: 
 
@@ -249,14 +254,15 @@ namespace nth {
         }
 
         //
-        public: inline static xn_shared_ptr<Handle> create() {
-            return std::make_shared<Handle>();
+        public: template<class W = BaseData, class C = void_t>
+        inline static HQ create(C const& cInfo) {
+            return W::create(std::make_shared<Handle>(0ull, HType::Unknown), cInfo);
         }
 
         //
-        public: template<class H = uintptr_t>
-        inline static xn_shared_ptr<H> create() {
-            return std::make_shared<H>((H)0ull);
+        public: template<class W = BaseData, class C = void_t>
+        inline static HQ create(HQ base, C const& cInfo) {
+            return W::create(base, cInfo);
         }
 
         //
@@ -318,7 +324,7 @@ namespace nth {
 
     //
     template<class O, class T>
-    inline decltype(auto) BaseData::get(std::shared_ptr<Handle> handle, T const& gInfoPtr) {
+    inline decltype(auto) BaseData::getBy(std::shared_ptr<Handle> handle, T const& gInfoPtr) {
         auto output = O{};
         Registry.at(handle)->getData()->get(handle, &output, &gInfoPtr);
         return output;
