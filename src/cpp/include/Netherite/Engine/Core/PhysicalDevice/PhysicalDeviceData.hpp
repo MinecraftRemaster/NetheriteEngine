@@ -4,7 +4,7 @@
 
 //
 #ifndef NTH_IMPLEMENTATION
-#include "../../Core/Vulkan.hpp"
+#include "../../../Core/Vulkan.hpp"
 #endif
 
 //
@@ -19,20 +19,21 @@
 
 //
 #ifdef NTH_IMPLEMENTATION
-#include "./BufferData.hpp"
+#include "./PhysicalDeviceData.hpp"
 #endif
 
 //
 namespace nth {
     #ifndef NTH_IMPLEMENTATION
-    struct BufferGetInfo {
+    struct PhysicalDeviceGetInfo {
         
     };
 
     // header
-    class BufferData : public BaseData {
+    class PhysicalDeviceData : public BaseData {
         
     };
+
     #else
     // implementation
 

@@ -1,7 +1,7 @@
 //
 #undef NTH_IMPLEMENTATION
-#include "./Vulkan.hpp"
+#include "./MemoryData.hpp"
 
 //
 #define NTH_IMPLEMENTATION
-#include "./Vulkan.hpp"
+#include "./MemoryData.hpp"

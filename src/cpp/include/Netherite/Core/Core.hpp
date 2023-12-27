@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <iterator>
 #include <unordered_map>
+#include <span>
 #include <atomic>
 // push headers for headers
 #endif
@@ -271,6 +272,27 @@ namespace nth {
             return std::reinterpret_pointer_cast<T>(this->data);
         }
 
+    };
+
+    //
+    template<class T>
+    class view {
+        protected: T const* _ptr = nullptr;
+        protected: uint32_t _size = 0;
+
+        //
+        public: view(std::vector<T> const& vect = {}) : _ptr(vect.data()), _size(vect.size()) {};
+        public: view(T const* _ptr, size_t const& _size = 1) : _ptr(_ptr), _size(_size) {};
+        public: view(T const& _ptr, size_t const& _size = 1) : _ptr(&_ptr), _size(_size) {};
+
+        //
+        public: uint32_t const& size() const { return _size; }
+        public: T const* data() const { return _ptr; }
+
+        //
+        public: operator std::vector<T>() const {  return std::vector<T>(_ptr, _ptr + _size); }
+        //public: operator std::span<T>() const {  return std::span<T>(_ptr, _ptr + _size); }
+        public: operator T const*() const { return _ptr; }
     };
 
     // for buffer, image, etc.

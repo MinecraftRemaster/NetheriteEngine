@@ -4,7 +4,7 @@
 
 //
 #ifndef NTH_IMPLEMENTATION
-#include "../../Core/Vulkan.hpp"
+#include "../../../Core/Vulkan.hpp"
 #endif
 
 //
@@ -27,8 +27,15 @@ namespace nth {
     #ifndef NTH_IMPLEMENTATION
 
     //
+    struct QueueCreateInfo {
+        view<float> queuePriority = {};
+        uint32_t familyIndex = 0u;
+    };
+
+    //
     struct DeviceCreateInfo {
         uint32_t physicalDeviceId = 0;
+        view<QueueCreateInfo> queueInfos = {};
     };
 
     // header
@@ -67,10 +74,10 @@ namespace nth {
         }, physicalDevice.enumerateDeviceLayerProperties());
 
         //
-        auto queueInfos = BaseData::transform(createInfo.queueInfos, [] (auto const& queueFamily) {
+        auto queueInfos = BaseData::transform(createInfo.queueInfos, [] (auto const& queueInfo) {
             vk::DeviceQueueCreateInfo createInfo = {};
-            createInfo.setQueuePriorities(*queueFamily.second.queuePriority);
-            createInfo.setQueueFamilyIndex(queueFamily.first);
+            createInfo.setQueuePriorities(queueInfo.queuePriority);
+            createInfo.setQueueFamilyIndex(queueInfo.familyIndex);
             return createInfo;
         });
 
